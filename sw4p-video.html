@@ -1,0 +1,118 @@
+<link rel="import" href="../polymer/polymer-element.html">
+
+<!--
+'sw4p-video' is a web component for embedding videos. Its supports YouTube, Vimeo, or web optimized raw video files. (.mp4 and .webm)
+
+Example:
+    <sw4p-video url="https://www.youtube.com/watch?v=G1TS_5ck0nw"></sw4p-video>
+
+@group Sw4p Elements
+@element sw4p-icon
+@demo demo/index.html
+-->
+<dom-module id="sw4p-video">
+
+    <template>
+        <style is="custom-style">
+
+            :host {
+                display: block;
+                --sw4p-video-width: 300px;
+                --sw4p-video-height: 300px;
+            }
+
+            .sw4p-video {
+                display: flex;
+                justify-content: center;
+                width: 100%;
+                height: 100%;
+            }
+
+            .sw4p-video iframe {
+                width: var(--sw4p-video-width, 300px);
+                height: var(--sw4p-video-height, 300px);
+            }
+
+        </style>
+
+        <div class="sw4p-video">
+            <iframe sandbox="allow-same-origin allow-scripts allow-popups allow-presentation" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen src="{{urlVideo}}"></iframe>
+        </div>
+
+    </template>
+
+    <script>
+        class Sw4pVideo extends Polymer.Element {
+            static get is() {
+                return 'sw4p-video';
+            }
+            static get properties() {
+                return {
+                    url: {
+                        type: String,
+                        value: '',
+                        observer: 'getVideoProperties'
+                    },
+                    width: {
+                        type: String,
+                        value: '300px',
+                        observer: '_updateWidth'
+                    },
+                    height: {
+                        type: String,
+                        value: '300px',
+                        observer: '_updateHeight'
+                    }
+                }
+            }
+            getVideoProperties() {
+                this._isVimeoVideo() || this._isYoutubeVideo() ? this.getVideoPlatformsProperties() :this.getOthers();
+            }
+            _isVimeoVideo() {
+                return this.url.indexOf('vimeo') !== -1;
+            }
+            _isYoutubeVideo() {
+                return this.url.indexOf('youtube') !== -1;
+            }
+            getVideoPlatformsProperties() {
+                this.url.indexOf('vimeo') !== -1 ? this.setVimeoProperties() : this.setYoutubeProperties()
+            }
+            setVimeoProperties() {
+                this.getVimeoVideoId();
+                this.set('urlVideo', 'https://player.vimeo.com/video/'+this.videoId);
+            }
+            setYoutubeProperties() {
+                this.getYoutubeVideoId();
+                this.set('urlVideo', 'https://www.youtube.com/embed/'+this.videoId);
+            }
+            getYoutubeVideoId() {
+                let videoId = this.url.indexOf('youtube.com') !== -1 ? this.url.split('=')[1] :  this.url.split('/')[3];
+                this.set('videoId', videoId)
+            }
+
+            getVimeoVideoId() {
+                let videoId;
+                if(this.url.replace('https://', '').split('/').length > 2) {
+                    // not the normal url. Need to grab the last index
+                    const url = this.url.split('/');
+                    videoId = url[url.length-1];
+                    this.set('videoId', videoId);
+                }else{
+                    videoId = this.url.split('com/')[1];
+                    this.set('videoId', videoId)
+                }
+            }
+            getOthers() {
+                return (this.url.indexOf('http') !== -1 || this.url.indexOf('https') !== -1) && (this.url.indexOf('.mp4') !== -1 || this.url.indexOf('.oog') !== -1 || this.url.indexOf('.webm') !== -1) ? this.set('urlVideo', this.url) : null;
+            }
+            _updateWidth() {
+                this.updateStyles({'--sw4p-video-width': this.width});
+            }
+            _updateHeight() {
+                this.updateStyles({'--sw4p-video-height': this.height});
+            }
+        }
+        customElements.define(Sw4pVideo.is, Sw4pVideo);
+    </script>
+
+</dom-module>
